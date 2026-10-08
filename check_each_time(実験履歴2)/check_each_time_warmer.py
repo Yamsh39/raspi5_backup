@@ -6,12 +6,12 @@ import time
 TEST_COUNT = 105
 WARMUP = 5  # 平均から除外する最初の測定回数
 
-ENABLE_CAPTURE = True
+ENABLE_CAPTURE = False
 ENABLE_JPEG = True
-ENABLE_WIFI = True
+ENABLE_WIFI = False
 
 SERVER_URL = "http://192.168.3.7:3000/upload"
-IMAGE_PATH = "/home/pi/Documents/try1000_v2/image.jpg"
+IMAGE_PATH = "/home/pi/Documents/check_each_time/image.jpg"
 
 
 def cpu_marker(duration=2.0):
@@ -23,9 +23,17 @@ def cpu_marker(duration=2.0):
         x //= 2
 
 
-if ENABLE_WIFI and not ENABLE_CAPTURE:
+fixed_jpg = None
+
+if ENABLE_WIFI and not ENABLE_JPEG:
     with open(IMAGE_PATH, "rb") as f:
         fixed_jpg = f.read()
+
+fixed_frame = None
+
+if ENABLE_JPEG and not ENABLE_CAPTURE:
+    fixed_frame = cv2.imread(IMAGE_PATH)
+
 
 if ENABLE_CAPTURE:
     picam2 = Picamera2()
@@ -46,7 +54,7 @@ if ENABLE_CAPTURE:
             [cv2.IMWRITE_JPEG_QUALITY, 80]
     )
 
-# cpu_marker(2.0)
+cpu_marker(2.0)
 
 capture_total = 0.0
 jpeg_total = 0.0
@@ -64,6 +72,8 @@ for i in range(TEST_COUNT):
     # 撮影
     if ENABLE_CAPTURE:
         frame = picam2.capture_array()
+    else:
+        frame = fixed_frame
 
     t1 = time.perf_counter()
 
@@ -118,7 +128,7 @@ for i in range(TEST_COUNT):
         all_total += total_ms
         valid_count += 1
 
-# cpu_marker(2.0)
+cpu_marker(2.0)
 
 print(f"\n===== Average (excluding first {WARMUP} runs) =====")
 print(f"Capture : {capture_total / valid_count:.2f} ms")

@@ -6,12 +6,12 @@ import time
 TEST_COUNT = 105
 WARMUP = 5  # 平均から除外する最初の測定回数
 
-FPS = 15
+FPS = 1
 FRAME_PERIOD = 1.0 / FPS
 
 ENABLE_CAPTURE = True
 ENABLE_JPEG = True
-ENABLE_WIFI = False
+ENABLE_WIFI = True
 
 SERVER_URL = "http://192.168.3.7:3000/upload"
 IMAGE_PATH = "/home/pi/Documents/try1000_v2/image.jpg"

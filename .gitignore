@@ -8,5 +8,4 @@ node_modules/
 .env
 *.zip
 *.pt
-yoloenv/val2017.zip
 yoloenv/
