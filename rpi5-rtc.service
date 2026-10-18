@@ -1,0 +1,14 @@
+[Unit]
+Description=RPi5 RTC intermittent measurement
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 "/home/pi/Documents/measurement(実験履歴2)/intermittent_rtc.py"
+StandardOutput=append:/home/pi/Documents/measurement(実験履歴2)/rtc_console.log
+StandardError=append:/home/pi/Documents/measurement(実験履歴2)/rtc_console.log
+
+[Install]
+WantedBy=multi-user.target

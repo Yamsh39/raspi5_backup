@@ -1,0 +1,97 @@
+RPi5 RTC間欠測定 手順とチェックリスト
+========================================
+
+■ 0. 準備（ターミナルを開いたら毎回）
+
+  D="/home/pi/Documents/measurement(実験履歴2)"
+
+
+■ 1. 測定前の確認
+
+  # 状態ファイルが残っていないか（No such file なら OK）
+  ls "$D/rtc_state.json"
+
+  # サービスが有効か（enabled なら OK）
+  systemctl is-enabled rpi5-rtc.service
+
+  # disabled だった場合
+  sudo systemctl enable rpi5-rtc.service
+
+  # 送信先 IP の確認
+  grep SERVER_URL "$D/intermittent_rtc.py"
+
+  # 周期・周期数の確認
+  grep -E "^(CYCLES|PERIOD_MS)" "$D/intermittent_rtc.py"
+
+  PC側も確認:
+  - PC の IP が SERVER_URL と一致しているか
+  - サーバーのプログラムが起動しているか
+
+
+■ 2. 前回の結果を退避
+
+  cd "$D"
+  mv rtc_60000ms.csv rtc_60000ms_○回目.csv
+  mv rtc_console.log rtc_console_○回目.log
+
+  ※ ○は番号。周期を変えた場合は CSV 名の数字も変わる
+  ※ CSV は start で上書き、console.log は追記される
+
+
+■ 3. 測定開始
+
+  1) 電力計の記録を開始
+  2) 実行
+
+  sudo python3 "$D/intermittent_rtc.py" start
+
+  - 実行するとすぐ halt（電源OFF）→ 30秒後に1周期目が起動
+  - 60秒 x (1+10)周期 + 30秒 ≒ 約12分で終了
+  - 最後は電源が入ったままになる
+
+
+■ 4. 測定後
+
+  cat "$D/rtc_console.log"
+
+  - missed : 0 か確認
+  - 電力データは
+      開始: 2回目の立ち上がりの行から
+      終了: 12回目の立ち上がりの直前（OFF の最後の行）まで
+    = 600行（1秒間隔の場合）を切り出す
+  - 立ち上がり間隔がすべて約60秒か確認
+  - 終了マーカー（約2秒の山）は12回目の起動の約30秒後に出る
+    → 測定区間には含めない
+
+
+■ 5. 途中で止めたいとき・ループから抜けたいとき
+
+  1) PC 側のサーバーを止める（Pi が起動したまま止まるようになる）
+  2) Pi の電源ボタンを押す
+  3) 1分ほど待って SSH で入り、
+
+  sudo rm "/home/pi/Documents/measurement(実験履歴2)/rtc_state.json"
+  sudo systemctl disable rpi5-rtc.service
+
+  4) 確認（No such file と disabled なら完全に停止）
+
+  ls "/home/pi/Documents/measurement(実験履歴2)/rtc_state.json"
+  systemctl is-enabled rpi5-rtc.service
+
+  ※ 次に測定するときは 1 に戻って enable し直す
+
+
+■ 状態の見分け方
+
+  状態                       LED   電流
+  -------------------------  ----  ---------------------------
+  電源OFF（halt）            赤    約0.018 A
+  起動中・処理中             緑    約0.8〜1.0 A
+  起動したまま止まっている   緑    1分以上 0.018 A に落ちない
+
+
+■ エクセルでの計算
+
+  待機時間 [ms] = 周期[s] x 1000 - 復帰時間 - CJW合計
+  1周期あたりエネルギー [Ws] = 区間の総電力量 / 10
+  平均電力 [W] = 区間の総電力量 / 600
