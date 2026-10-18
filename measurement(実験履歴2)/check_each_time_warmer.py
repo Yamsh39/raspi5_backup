@@ -6,12 +6,12 @@ import time
 TEST_COUNT = 105
 WARMUP = 5  # 平均から除外する最初の測定回数
 
-ENABLE_CAPTURE = False
+ENABLE_CAPTURE = True
 ENABLE_JPEG = True
-ENABLE_WIFI = False
+ENABLE_WIFI = True
 
-SERVER_URL = "http://192.168.3.7:3000/upload"
-IMAGE_PATH = "/home/pi/Documents/check_each_time/image.jpg"
+SERVER_URL = "http://192.168.3.15:3000/upload"
+IMAGE_PATH = "/home/pi/Documents/image.jpg"
 
 
 def cpu_marker(duration=2.0):
@@ -39,7 +39,7 @@ if ENABLE_CAPTURE:
     picam2 = Picamera2()
 
     config = picam2.create_preview_configuration(
-        main={"size": (640, 480)}
+        main={"size": (640, 480), "format": "RGB888"}
     )
 
     picam2.configure(config)
